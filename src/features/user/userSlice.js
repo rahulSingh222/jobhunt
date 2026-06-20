@@ -6,7 +6,7 @@ import {
   removeUserFromLocalStorage,
   addUserToLocalStorage,
 } from "../../utils/localStorage";
-import { clearAllJobsState } from "../alljobs/allJobsSlice";
+import { clearAllJobsState, getAllJobs, showStats } from "../alljobs/allJobsSlice";
 import { clearValues } from "../Job/jobSlice";
 
 const initialState = {
@@ -27,11 +27,32 @@ export const registerUser = createAsyncThunk(
   }
 );
 
+// Mock user for testing without backend
+const MOCK_USER = {
+  name: 'Test User',
+  email: 'testUser@test.com',
+  token: 'mock-token-12345',
+  lastName: 'User',
+  location: 'United States'
+};
+
 export const loginUser = createAsyncThunk(
   "user/loginUser",
   async (user, thunkAPI) => {
     try {
+      // Check if it's the test user
+      if (user.email === 'testUser@test.com' && user.password === 'secret') {
+        // Dispatch jobs and stats actions for mock data
+        thunkAPI.dispatch(getAllJobs());
+        thunkAPI.dispatch(showStats());
+        // Return mock user response
+        return { user: MOCK_USER };
+      }
+      
+      // Otherwise try real API
       const response = await customFetch.post("/auth/login", user);
+      thunkAPI.dispatch(getAllJobs());
+      thunkAPI.dispatch(showStats());
       return response.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response.data.msg);
